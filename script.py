@@ -3,7 +3,7 @@ import serial
 import time
 
 # URL del archivo RAW en GitHub (actualízala con tu repositorio)
-GITHUB_URL = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/estado.json"
+GITHUB_URL = "https://raw.githubusercontent.com/KVNSS002/CONTROLAR-MOTOR/refs/heads/main/estado.json"
 
 # Configurar el puerto correcto para Arduino (verificar en Arduino IDE)
 SERIAL_PORT = "COM7"  # Cambia según tu configuración (Windows: COMX, Linux/Mac: /dev/ttyUSB0)
