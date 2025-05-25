@@ -2,36 +2,43 @@ import requests
 import serial
 import time
 
-# URL de GitHub
-GITHUB_URL = "https://raw.githubusercontent.com/KVNSS002/CONTROLAR-MOTOR/refs/heads/main/estado.json"
-SERIAL_PORT = "COM7"
+# URL del archivo RAW en GitHub (actualízala con tu repositorio)
+GITHUB_URL = "https://raw.githubusercontent.com/KVNSS002/CONTROLAR-MOTOR/main/estado.json"
+
+# Configurar el puerto correcto para Arduino (verificar en Arduino IDE)
+SERIAL_PORT = "COM7"  # Cambia según tu configuración
 BAUDRATE = 9600
 
-# Conectar con Arduino
+# Intentar conectar con Arduino
 try:
     arduino = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=1)
+    time.sleep(2)  # Esperar conexión
 except serial.SerialException:
-    print(f"Error: No se pudo abrir el puerto {SERIAL_PORT}.")
+    print(f"Error: No se pudo abrir el puerto {SERIAL_PORT}. Verifica la conexión.")
     exit()
-
-ultimo_comando = None
 
 while True:
     try:
-        response = requests.get(GITHUB_URL, timeout=10)  # Long Polling con timeout de 10 segundos
-        if response.status_code == 200:
-            data = response.json()
-            comando_actual = str(data.get("comando", ""))
+        # Obtener estado.json desde GitHub
+        response = requests.get(GITHUB_URL, timeout=10)
+        response.raise_for_status()  # Lanza una excepción si la respuesta no es 200
 
-            if comando_actual and comando_actual != ultimo_comando:
-                arduino.write(comando_actual.encode())
-                print(f"✅ Comando actualizado y enviado a Arduino: {comando_actual}")
-                ultimo_comando = comando_actual
+        data = response.json()
+        
+        if "comando" in data:  # Verificar existencia de la clave
+            comando = str(data["comando"])
+
+            try:
+                arduino.write(comando.encode())
+                arduino.flush()  # Asegurar envío de datos
+                print(f"✅ Comando enviado a Arduino: {comando}")
+            except serial.SerialException:
+                print("⚠ Error al enviar datos al Arduino.")
 
         else:
-            print(f"⚠ Error al obtener estado.json, código {response.status_code}")
+            print("⚠ Advertencia: No se encontró 'comando' en el JSON.")
 
     except requests.exceptions.RequestException as e:
         print(f"⚠ Error en la conexión: {e}")
 
-    time.sleep(0.5)  # Revisar cambios cada 500ms
+    time.sleep(2)  # Revisar cambios cada 2 segundos
