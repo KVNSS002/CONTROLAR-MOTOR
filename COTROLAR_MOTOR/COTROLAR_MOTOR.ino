@@ -43,7 +43,7 @@ void ejecutarMotor(int comando) {
     case 3:  // Cambio de dirección con velocidad media
       digitalWrite(pinIN3, LOW);
       digitalWrite(pinIN4, HIGH);
-      analogWrite(pinENB, 150);
+      analogWrite(pinENB, 250);
       break;
     default:  // Detener el motor si el comando es inválido
       digitalWrite(pinIN3, LOW);
