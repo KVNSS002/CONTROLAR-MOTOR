@@ -3,7 +3,7 @@ import serial
 import time
 
 # URL de GitHub
-GITHUB_URL = "https://raw.githubusercontent.com/KVNSS002/CONTROLAR-MOTOR/main/estado.json"
+GITHUB_URL = "https://raw.githubusercontent.com/KVNSS002/CONTROLAR-MOTOR/refs/heads/main/estado.json"
 SERIAL_PORT = "COM7"
 BAUDRATE = 9600
 
