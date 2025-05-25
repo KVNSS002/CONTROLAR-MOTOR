@@ -8,45 +8,56 @@ import subprocess
 GITHUB_URL = "https://raw.githubusercontent.com/KVNSS002/CONTROLAR-MOTOR/main/estado.json"
 SERIAL_PORT = "COM7"
 BAUDRATE = 9600
-PROYECTO_DIR = "C:\\Users\\kevin\\Documents\\PROYECTOS GIT\\CONTROLAR-MOTOR"
+PROYECTO_DIR = r"C:\Users\kevin\Documents\PROYECTOS GIT\CONTROLAR-MOTOR"  # Directorio actualizado
 
-# Intentar conectar con Arduino
-try:
-    arduino = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=0.5)  # Ajuste del timeout
-    time.sleep(1)  # Reducción del tiempo inicial de conexión
-except serial.SerialException:
-    print(f"Error: No se pudo abrir el puerto {SERIAL_PORT}.")
-    exit()
+# Conectar con Arduino
+def conectar_arduino():
+    try:
+        arduino = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=0.5)
+        time.sleep(1)  # Esperar conexión
+        return arduino
+    except serial.SerialException:
+        print(f"Error: No se pudo abrir el puerto {SERIAL_PORT}. Verifica la conexión.")
+        exit()
 
-# Función para actualizar código desde GitHub
+# Actualizar el código desde GitHub
 def actualizar_codigo():
     try:
         os.chdir(PROYECTO_DIR)
+        subprocess.run(["git", "fetch", "--all"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["git", "reset", "--hard", "origin/main"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         subprocess.run(["git", "pull", "origin", "main"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    except:
-        pass  # Ignorar errores de actualización
+    except Exception as e:
+        print(f"⚠ Error al actualizar el código: {e}")
 
-ultimo_comando = None
-
-while True:
+# Obtener el estado actualizado desde GitHub
+def obtener_estado():
     try:
-        actualizar_codigo()
+        response = requests.get(GITHUB_URL, timeout=2, headers={"Cache-Control": "no-cache"})
+        response.raise_for_status()
+        return response.json().get("comando", "")
+    except requests.exceptions.RequestException:
+        return None  # Ignorar errores de conexión
 
-        # Obtener estado.json con menor latencia
-        response = requests.get(GITHUB_URL, timeout=2)
-        data = response.json()
-        comando_actual = str(data.get("comando", ""))
+# Ejecutar ciclo de actualización y envío a Arduino
+def ejecutar():
+    arduino = conectar_arduino()
+    ultimo_comando = None
 
-        if comando_actual and comando_actual != ultimo_comando:
+    while True:
+        actualizar_codigo()  # Descargar código actualizado
+        comando_actual = obtener_estado()  # Leer JSON actualizado
+
+        if comando_actual and comando_actual.strip() != ultimo_comando:
             try:
                 arduino.write(comando_actual.encode())
                 arduino.flush()
-                print(f"✅ Comando enviado: {comando_actual}")
+                print(f"Comando enviado: {comando_actual}")
                 ultimo_comando = comando_actual
             except serial.SerialException:
-                pass  # Ignorar errores de comunicación
+                print("⚠ Error al enviar datos a Arduino.")
 
-    except requests.exceptions.RequestException:
-        pass  # Ignorar errores de conexión
+        time.sleep(0.5)  # Revisar cambios cada 500ms
 
-    time.sleep(0.5)  # **Tiempo mínimo de espera: 500ms**
+# Iniciar ejecución
+ejecutar()
