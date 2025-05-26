@@ -1,8 +1,9 @@
-const int pinIN3 = 22;  // Pin de dirección del motor
-const int pinIN4 = 23;  // Pin de dirección del motor
-const int pinENB = 2;   // ¡Debe ser PWM para el control de velocidad!
+const int pinIN3 = 22;
+const int pinIN4 = 23;
+const int pinENB = 2;
 
-int ultimoComando = 0;  // Guarda el último comando recibido
+int ultimoComando = 0;
+bool nuevoComandoRecibido = false;  // Bandera para detectar cambios
 
 void setup() {
   pinMode(pinIN3, OUTPUT);
@@ -12,40 +13,40 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    String comandoStr = Serial.readStringUntil('\n');  // Leer línea completa
-    int comando = comandoStr.toInt();  // Convertir a número
-
-    if (comando >= 1 && comando <= 3) {  // Validación del comando
-      ultimoComando = comando;
-      Serial.print("Comando recibido y ejecutando: ");
+  while (Serial.available() > 0) {
+    char comandoChar = Serial.read();  // Leer solo un carácter
+    if (comandoChar >= '1' && comandoChar <= '3') {
+      ultimoComando = comandoChar - '0';  // Convertir carácter a número
+      nuevoComandoRecibido = true;
+      Serial.print("Comando recibido: ");
       Serial.println(ultimoComando);
-    } else {
-      Serial.println("Comando inválido.");
     }
   }
 
-  ejecutarMotor(ultimoComando);
+  if (nuevoComandoRecibido) {
+    ejecutarMotor(ultimoComando);
+    nuevoComandoRecibido = false;  // Resetea bandera para esperar nuevo comando
+  }
 }
 
 void ejecutarMotor(int comando) {
   switch (comando) {
-    case 1:  // Velocidad baja
+    case 1: 
       digitalWrite(pinIN3, HIGH);
       digitalWrite(pinIN4, LOW);
       analogWrite(pinENB, 100);
       break;
-    case 2:  // Velocidad máxima
+    case 2:  
       digitalWrite(pinIN3, HIGH);
       digitalWrite(pinIN4, LOW);
       analogWrite(pinENB, 255);
       break;
-    case 3:  // Cambio de dirección con velocidad media
+    case 3:  
       digitalWrite(pinIN3, LOW);
       digitalWrite(pinIN4, HIGH);
       analogWrite(pinENB, 250);
       break;
-    default:  // Detener el motor si el comando es inválido
+    default:  
       digitalWrite(pinIN3, LOW);
       digitalWrite(pinIN4, LOW);
       analogWrite(pinENB, 0);
