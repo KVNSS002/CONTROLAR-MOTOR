@@ -9,7 +9,7 @@ BAUDRATE = 9600
 
 # 🚀 Conectar con Arduino con timeout reducido
 try:
-    arduino = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=0.2)  # Mejor rendimiento en la comunicación serial
+    arduino = serial.Serial(SERIAL_PORT, BAUDRATE, timeout=0.6)  # Mejor rendimiento en la comunicación serial
     time.sleep(1)  # Esperar conexión
 except serial.SerialException:
     print(f"❌ Error: No se pudo abrir el puerto {SERIAL_PORT}. Verifica la conexión.")
